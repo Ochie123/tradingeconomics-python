@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Market Forecasts Dashboard</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tabulator/5.5.0/js/tabulator.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tabulator/5.5.0/css/tabulator.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .section {
+            margin-bottom: 40px;
+        }
+        .chart-container {
+            margin-top: 30px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Market Forecasts Dashboard</h1>
+        
+        <div class="section">
+            <h2>Forecast Values</h2>
+            <div id="forecasts-table"></div>
+        </div>
+        
+        <div class="section">
+            <h2>Percentage Changes</h2>
+            <div id="changes-plot"></div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize Tabulator table
+        const forecastsData = {{ forecasts|tojson|safe }};
+        const forecastsTable = new Tabulator("#forecasts-table", {
+            data: forecastsData,
+            layout: "fitColumns",
+            columns: [
+                {title: "Country", field: "Country"},
+                {title: "Index", field: "Index"},
+                {title: "Current Value", field: "Current_Value", formatter: "number", formatterParams: {precision: 2}},
+                {title: "Current Date", field: "Current_Date"},
+                {title: "Dec 2024", field: "Dec_2024", formatter: "number", formatterParams: {precision: 2}},
+                {title: "Mar 2025", field: "Mar_2025", formatter: "number", formatterParams: {precision: 2}},
+                {title: "Jun 2025", field: "Jun_2025", formatter: "number", formatterParams: {precision: 2}},
+                {title: "Sep 2025", field: "Sep_2025", formatter: "number", formatterParams: {precision: 2}},
+            ],
+        });
+
+        // Create Plotly chart
+        const changesData = {{ changes|tojson|safe }};
+        const periods = ['Dec_2024', 'Mar_2025', 'Jun_2025', 'Sep_2025'];
+        const traces = changesData.map(item => ({
+            name: `${item.Country} - ${item.Index}`,
+            x: periods.map(p => p.replace('_', ' ')),
+            y: periods.map(p => item[p]),
+            type: 'scatter',
+            mode: 'lines+markers'
+        }));
+
+        const layout = {
+            title: 'Forecast Percentage Changes',
+            xaxis: {
+                title: 'Period'
+            },
+            yaxis: {
+                title: 'Change (%)',
+                tickformat: '.2f'
+            },
+            hovermode: 'closest',
+            showlegend: true
+        };
+
+        Plotly.newPlot('changes-plot', traces, layout);
+    </script>
+</body>
+</html>
